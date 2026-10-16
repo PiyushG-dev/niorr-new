@@ -8,14 +8,17 @@ import { events } from '../data/events';
 function RosterSection() {
   const previewImgRef = useRef(null);
   const previewVideoRef = useRef(null);
-  const [activeSlug, setActiveSlug] = useState(null);
+  const [activeSlug, setActiveSlug] = useState(projects[0]?.slug);
 
-  const handleMouseEnter = (project) => {
+  const activateProject = (project) => {
+    if (!project) return;
     setActiveSlug(project.slug);
     if (project.previewVideo) {
       if (previewImgRef.current) previewImgRef.current.classList.remove('is-visible');
       if (previewVideoRef.current) {
-        previewVideoRef.current.src = project.previewVideo;
+        if (previewVideoRef.current.getAttribute('src') !== project.previewVideo) {
+          previewVideoRef.current.src = project.previewVideo;
+        }
         previewVideoRef.current.play().catch(() => {});
         previewVideoRef.current.classList.add('is-visible');
       }
@@ -32,13 +35,19 @@ function RosterSection() {
     }
   };
 
-  const handleMouseLeave = () => {
-    setActiveSlug(null);
-    if (previewImgRef.current) previewImgRef.current.classList.remove('is-visible');
-    if (previewVideoRef.current) {
-      previewVideoRef.current.classList.remove('is-visible');
-      previewVideoRef.current.pause();
-      previewVideoRef.current.src = '';
+  useEffect(() => {
+    if (projects.length > 0) {
+      activateProject(projects[0]);
+    }
+  }, []);
+
+  const handleMouseEnter = (project) => {
+    activateProject(project);
+  };
+
+  const handleListMouseLeave = () => {
+    if (projects.length > 0) {
+      activateProject(projects[0]);
     }
   };
 
@@ -51,14 +60,14 @@ function RosterSection() {
       {/* Desktop layout */}
       <div className="roster__layout">
         <div className="roster__group">
-          <ul className="roster__list">
+          <ul className="roster__list" onMouseLeave={handleListMouseLeave}>
             {projects.map((project) => (
               <li key={project.slug}>
                 <Link
                   to={`/${project.slug}`}
                   className={activeSlug === project.slug ? 'is-active' : ''}
                   onMouseEnter={() => handleMouseEnter(project)}
-                  onMouseLeave={handleMouseLeave}
+                  onFocus={() => handleMouseEnter(project)}
                 >
                   <span className="roster__num">{project.num}.</span>{' '}
                   {project.title}
